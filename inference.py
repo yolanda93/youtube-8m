@@ -33,19 +33,19 @@ import utils
 FLAGS = flags.FLAGS
 
 if __name__ == '__main__':
-  flags.DEFINE_string("train_dir", "/tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "C:/Users/Yolanda/workspace/youtube-8m/tmp/yt8m_model/",
                       "The directory to load the model files from.")
-  flags.DEFINE_string("output_file", "",
+  flags.DEFINE_string("output_file", "C:/Users/Yolanda/workspace/youtube-8m/tmp/yt8m_model/",
                       "The file to save the predictions to.")
   flags.DEFINE_string(
-      "input_data_pattern", "",
+      "input_data_pattern", "C:/Users/Yolanda/workspace/youtube-8m/dataset/frame_level/evaluation/test*.tfrecord",
       "File glob defining the evaluation dataset in tensorflow.SequenceExample "
       "format. The SequenceExamples are expected to have an 'rgb' byte array "
       "sequence feature as well as a 'labels' int64 context feature.")
 
   # Model flags.
   flags.DEFINE_bool(
-      "frame_features", False,
+      "frame_features", True,
       "If set, then --eval_data_pattern must be frame-level features. "
       "Otherwise, --eval_data_pattern must be aggregated video-level "
       "features. The model must also be set appropriately (i.e. to read 3D "
@@ -53,9 +53,9 @@ if __name__ == '__main__':
   flags.DEFINE_integer(
       "batch_size", 8192,
       "How many examples to process per batch.")
-  flags.DEFINE_string("feature_names", "mean_rgb", "Name of the feature "
+  flags.DEFINE_string("feature_names", "rgb, audio", "Name of the feature "
                       "to use for training.")
-  flags.DEFINE_string("feature_sizes", "1024", "Length of the feature vectors.")
+  flags.DEFINE_string("feature_sizes", "1024, 128", "Length of the feature vectors.")
 
 
   # Other flags.

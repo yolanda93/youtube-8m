@@ -17,12 +17,6 @@ import json
 import os
 import time
 
-import eval_util
-import export_model
-import losses
-import frame_level_models
-import video_level_models
-import readers
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow import app
@@ -30,37 +24,44 @@ from tensorflow import flags
 from tensorflow import gfile
 from tensorflow import logging
 from tensorflow.python.client import device_lib
+
+import eval_util
+import export_model
+import frame_level_models
+import losses
+import readers
 import utils
+import video_level_models
 
 FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
   # Dataset flags.
-  flags.DEFINE_string("train_dir", "/tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "C:/Users/Yolanda/workspace/youtube-8m/tmp/yt8m_model/",
                       "The directory to save the model files in.")
   flags.DEFINE_string(
-      "train_data_pattern", "",
+      "train_data_pattern", "C:/Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train*.tfrecord",
       "File glob for the training dataset. If the files refer to Frame Level "
       "features (i.e. tensorflow.SequenceExample), then set --reader_type "
       "format. The (Sequence)Examples are expected to have 'rgb' byte array "
       "sequence feature as well as a 'labels' int64 context feature.")
-  flags.DEFINE_string("feature_names", "mean_rgb", "Name of the feature "
+  flags.DEFINE_string("feature_names", "rgb, audio", "Name of the feature "
                       "to use for training.")
   flags.DEFINE_string("feature_sizes", "1024", "Length of the feature vectors.")
 
   # Model flags.
   flags.DEFINE_bool(
-      "frame_features", False,
+      "frame_features", True,
       "If set, then --train_data_pattern must be frame-level features. "
       "Otherwise, --train_data_pattern must be aggregated video-level "
       "features. The model must also be set appropriately (i.e. to read 3D "
       "batches VS 4D batches.")
   flags.DEFINE_string(
-      "model", "LogisticModel",
+      "model", "LstmModel",
       "Which architecture to use for the model. Models are defined "
       "in models.py.")
   flags.DEFINE_bool(
-      "start_new_model", False,
+      "start_new_model", True,
       "If set, this will not resume from a checkpoint and will instead create a"
       " new model instance.")
 

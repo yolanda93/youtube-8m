@@ -46,17 +46,17 @@ if __name__ == "__main__":
 
   # Model flags.
   flags.DEFINE_bool(
-      "frame_features", False,
+      "frame_features", True,
       "If set, then --eval_data_pattern must be frame-level features. "
       "Otherwise, --eval_data_pattern must be aggregated video-level "
       "features. The model must also be set appropriately (i.e. to read 3D "
       "batches VS 4D batches.")
   flags.DEFINE_string(
-      "model", "LogisticModel",
+      "model", "LstmModel",
       "Which architecture to use for the model. Options include 'Logistic', "
       "'SingleMixtureMoe', and 'TwoLayerSigmoid'. See aggregated_models.py and "
       "frame_level_models.py for the model definitions.")
-  flags.DEFINE_integer("batch_size", 1024,
+  flags.DEFINE_integer("batch_size", 1,
                        "How many examples to process per batch.")
   flags.DEFINE_string("label_loss", "CrossEntropyLoss",
                       "Loss computed on validation data")
@@ -231,7 +231,23 @@ def evaluation_loop(video_id_batch, prediction_batch, label_batch, loss,
         seconds_per_batch = time.time() - batch_start_time
         example_per_second = labels_val.shape[0] / seconds_per_batch
         examples_processed += labels_val.shape[0]
-
+        
+        res_pred =  sess.run(prediction_batch)
+        video_id_batch =  sess.run(video_id_batch)
+        label_batch =  sess.run(label_batch)
+        
+        for col, data in enumerate(res_pred):
+            worksheet.write_column(row, col, data)
+ 
+        workbook.close()          
+            
+        name =  str(video_id_batch) + "-" + str(examples_processed) + "-" + str(label_batch) 
+            
+        workbook = xlsxwriter.Workbook('./'  + name + '.xlsx')
+        worksheet = workbook.add_worksheet()
+      
+        workbook.close()
+        
         iteration_info_dict = evl_metrics.accumulate(predictions_val,
                                                      labels_val, loss_val)
         iteration_info_dict["examples_per_second"] = example_per_second

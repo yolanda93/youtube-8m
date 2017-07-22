@@ -24,6 +24,7 @@ from tensorflow import flags
 from tensorflow import gfile
 from tensorflow import logging
 from tensorflow.python.client import device_lib
+import matplotlib.pyplot as plt
 
 import eval_util
 import export_model
@@ -37,17 +38,17 @@ FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
   # Dataset flags.
-  flags.DEFINE_string("train_dir", "C:/Users/Yolanda/workspace/youtube-8m/tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "./tmp/yt8m_model/",
                       "The directory to save the model files in.")
   flags.DEFINE_string(
-      "train_data_pattern", "C:/Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train*.tfrecord",
+      "train_data_pattern", "C:/Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train3B/train*.tfrecord",
       "File glob for the training dataset. If the files refer to Frame Level "
       "features (i.e. tensorflow.SequenceExample), then set --reader_type "
       "format. The (Sequence)Examples are expected to have 'rgb' byte array "
       "sequence feature as well as a 'labels' int64 context feature.")
   flags.DEFINE_string("feature_names", "rgb, audio", "Name of the feature "
                       "to use for training.")
-  flags.DEFINE_string("feature_sizes", "1024", "Length of the feature vectors.")
+  flags.DEFINE_string("feature_sizes", "1024, 128", "Length of the feature vectors.")
 
   # Model flags.
   flags.DEFINE_bool(
@@ -61,12 +62,12 @@ if __name__ == "__main__":
       "Which architecture to use for the model. Models are defined "
       "in models.py.")
   flags.DEFINE_bool(
-      "start_new_model", True,
+      "start_new_model", False,
       "If set, this will not resume from a checkpoint and will instead create a"
       " new model instance.")
 
   # Training flags.
-  flags.DEFINE_integer("batch_size", 1024,
+  flags.DEFINE_integer("batch_size",1,
                        "How many examples to process per batch for training.")
   flags.DEFINE_string("label_loss", "CrossEntropyLoss",
                       "Which loss function to use for training the model.")
@@ -74,7 +75,7 @@ if __name__ == "__main__":
       "regularization_penalty", 1.0,
       "How much weight to give to the regularization loss (the label loss has "
       "a weight of 1).")
-  flags.DEFINE_float("base_learning_rate", 0.01,
+  flags.DEFINE_float("base_learning_rate", 0.0002,
                      "Which learning rate to start with.")
   flags.DEFINE_float("learning_rate_decay", 0.95,
                      "Learning rate decay factor to be applied every "
@@ -92,7 +93,7 @@ if __name__ == "__main__":
                        "is exported for batch prediction.")
 
   # Other flags.
-  flags.DEFINE_integer("num_readers", 8,
+  flags.DEFINE_integer("num_readers", 1,
                        "How many threads to use for reading input files.")
   flags.DEFINE_string("optimizer", "AdamOptimizer",
                       "What optimizer class to use.")
@@ -276,6 +277,8 @@ def build_graph(reader,
             tf.summary.histogram(variable.op.name, variable)
 
           predictions = result["predictions"]
+          state = result["state"]
+          outputs = result["outputs"]
           tower_predictions.append(predictions)
 
           if "loss" in result.keys():
@@ -328,6 +331,8 @@ def build_graph(reader,
   tf.add_to_collection("global_step", global_step)
   tf.add_to_collection("loss", label_loss)
   tf.add_to_collection("predictions", tf.concat(tower_predictions, 0))
+  tf.add_to_collection("state",state)
+  tf.add_to_collection("outputs",outputs)
   tf.add_to_collection("input_batch_raw", model_input_raw)
   tf.add_to_collection("input_batch", model_input)
   tf.add_to_collection("num_frames", num_frames)
@@ -392,6 +397,13 @@ class Trainer(object):
         global_step = tf.get_collection("global_step")[0]
         loss = tf.get_collection("loss")[0]
         predictions = tf.get_collection("predictions")[0]
+        i=0
+        if(i>0):
+          state = tf.get_collection("state")[0]
+          outputs = tf.get_collection("outputs")[0]
+
+
+        num_frames = tf.get_collection("num_frames")[0]
         labels = tf.get_collection("labels")[0]
         train_op = tf.get_collection("train_op")[0]
         init_op = tf.global_variables_initializer()
@@ -409,6 +421,25 @@ class Trainer(object):
     logging.info("%s: Starting managed session.", task_as_string(self.task))
     with sv.managed_session(target, config=self.config) as sess:
       try:
+        if(i>0):
+            result1 = sess.run(outputs)
+            print("outputs vector")
+            print(outputs)
+            print(result1)
+            plt.plot(result1[0])
+            plt.show()
+
+            result2 = sess.run(state)
+            print("state vector")
+            print(state)
+            print(result2)
+
+            result4 = sess.run(num_frames)
+            print("num_frames")
+            print(num_frames)
+            print(result4)
+        i+=1
+
         logging.info("%s: Entering training loop.", task_as_string(self.task))
         while (not sv.should_stop()) and (not self.max_steps_reached):
           batch_start_time = time.time()

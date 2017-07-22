@@ -51,6 +51,7 @@ class MoeModel(models.BaseModel):
 
   def create_model(self,
                    model_input,
+                   model_output,
                    vocab_size,
                    num_mixtures=None,
                    l2_penalty=1e-8,
@@ -100,4 +101,4 @@ class MoeModel(models.BaseModel):
         gating_distribution[:, :num_mixtures] * expert_distribution, 1)
     final_probabilities = tf.reshape(final_probabilities_by_class_and_batch,
                                      [-1, vocab_size])
-    return {"predictions": final_probabilities}
+    return {"predictions": final_probabilities, "state": model_input, "outputs": model_output}

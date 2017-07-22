@@ -14,8 +14,10 @@
 """Binary for evaluating Tensorflow models on the YouTube-8M dataset."""
 
 import time
+import sys
 
 import eval_util
+import xlsxwriter
 import losses
 import frame_level_models
 import video_level_models
@@ -26,37 +28,45 @@ from tensorflow import flags
 from tensorflow import gfile
 from tensorflow import logging
 import utils
+import matplotlib.pyplot as plt
+import numpy
+numpy.set_printoptions(threshold=numpy.inf)
+from time import gmtime, strftime
+import os
 
 FLAGS = flags.FLAGS
 
+examples_processed = 1150
+row = 0
+os.chdir('C:\\Users\Yolanda\workspace\youtube-8m')
 if __name__ == "__main__":
   # Dataset flags.
-  flags.DEFINE_string("train_dir", "/tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "./tmp/yt8m_model/",
                       "The directory to load the model files from. "
                       "The tensorboard metrics files are also saved to this "
                       "directory.")
   flags.DEFINE_string(
-      "eval_data_pattern", "",
+      "eval_data_pattern", "./dataset/frame_level/validation/validateOu.tfrecord",
       "File glob defining the evaluation dataset in tensorflow.SequenceExample "
       "format. The SequenceExamples are expected to have an 'rgb' byte array "
       "sequence feature as well as a 'labels' int64 context feature.")
-  flags.DEFINE_string("feature_names", "mean_rgb", "Name of the feature "
+  flags.DEFINE_string("feature_names", "rgb, audio", "Name of the feature "
                       "to use for training.")
-  flags.DEFINE_string("feature_sizes", "1024", "Length of the feature vectors.")
+  flags.DEFINE_string("feature_sizes", "1024, 128", "Length of the feature vectors.")
 
   # Model flags.
   flags.DEFINE_bool(
-      "frame_features", False,
+      "frame_features", True,
       "If set, then --eval_data_pattern must be frame-level features. "
       "Otherwise, --eval_data_pattern must be aggregated video-level "
       "features. The model must also be set appropriately (i.e. to read 3D "
       "batches VS 4D batches.")
   flags.DEFINE_string(
-      "model", "LogisticModel",
+      "model", "LstmModel",
       "Which architecture to use for the model. Options include 'Logistic', "
       "'SingleMixtureMoe', and 'TwoLayerSigmoid'. See aggregated_models.py and "
       "frame_level_models.py for the model definitions.")
-  flags.DEFINE_integer("batch_size", 1024,
+  flags.DEFINE_integer("batch_size", 1,
                        "How many examples to process per batch.")
   flags.DEFINE_string("label_loss", "CrossEntropyLoss",
                       "Loss computed on validation data")
@@ -79,18 +89,15 @@ def get_input_evaluation_tensors(reader,
                                  batch_size=1024,
                                  num_readers=1):
   """Creates the section of the graph which reads the evaluation data.
-
   Args:
     reader: A class which parses the training data.
     data_pattern: A 'glob' style path to the data files.
     batch_size: How many examples to process at a time.
     num_readers: How many I/O threads to use.
-
   Returns:
     A tuple containing the features tensor, labels tensor, and optionally a
     tensor containing the number of frames per video. The exact dimensions
     depend on the reader being used.
-
   Raises:
     IOError: If no files matching the given pattern were found.
   """
@@ -120,7 +127,6 @@ def build_graph(reader,
                 batch_size=1024,
                 num_readers=1):
   """Creates the Tensorflow graph for evaluation.
-
   Args:
     reader: The data file reader. It should inherit from BaseReader.
     model: The core model (e.g. logistic or neural net). It should inherit
@@ -152,6 +158,8 @@ def build_graph(reader,
                                 labels=labels_batch,
                                 is_training=False)
     predictions = result["predictions"]
+    state = result["state"]
+    outputs = result["outputs"]
     tf.summary.histogram("model_activations", predictions)
     if "loss" in result.keys():
       label_loss = result["loss"]
@@ -161,6 +169,8 @@ def build_graph(reader,
   tf.add_to_collection("global_step", global_step)
   tf.add_to_collection("loss", label_loss)
   tf.add_to_collection("predictions", predictions)
+  tf.add_to_collection("state",state)
+  tf.add_to_collection("outputs",outputs)
   tf.add_to_collection("input_batch", model_input)
   tf.add_to_collection("video_id_batch", video_id_batch)
   tf.add_to_collection("num_frames", num_frames)
@@ -168,11 +178,11 @@ def build_graph(reader,
   tf.add_to_collection("summary_op", tf.summary.merge_all())
 
 
+
 def evaluation_loop(video_id_batch, prediction_batch, label_batch, loss,
                     summary_op, saver, summary_writer, evl_metrics,
-                    last_global_step_val):
+                    last_global_step_val, outputs):
   """Run the evaluation loop once.
-
   Args:
     video_id_batch: a tensor of video ids mini-batch.
     prediction_batch: a tensor of predictions mini-batch.
@@ -183,7 +193,6 @@ def evaluation_loop(video_id_batch, prediction_batch, label_batch, loss,
     summary_writer: a tensorflow summary_writer
     evl_metrics: an EvaluationMetrics object.
     last_global_step_val: the global step used in the previous evaluation.
-
   Returns:
     The global_step used in the latest model.
   """
@@ -231,6 +240,52 @@ def evaluation_loop(video_id_batch, prediction_batch, label_batch, loss,
         seconds_per_batch = time.time() - batch_start_time
         example_per_second = labels_val.shape[0] / seconds_per_batch
         examples_processed += labels_val.shape[0]
+
+        res_pred =  sess.run(prediction_batch)
+        res_video_id_batch =  sess.run(video_id_batch)
+        res_label_batch =  sess.run(label_batch)
+        res_outputs = sess.run(outputs)
+
+        directory = './results/' + str(res_video_id_batch[0])
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # --------------------->  predictions
+
+        name =  "predictions"
+
+        workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+        worksheet = workbook.add_worksheet()
+
+        for col, data in enumerate(res_pred):
+            worksheet.write_column(row, col, data)
+
+        workbook.close()
+
+        # --------------------->  outputs
+
+        name =  "outputs"
+
+        workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+        worksheet = workbook.add_worksheet()
+
+        for col, data in enumerate(res_outputs[0]):
+            worksheet.write_column(row, col, data)
+
+        workbook.close()
+
+        # --------------------->  labels
+
+        name =  "labels"
+
+        workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+        worksheet = workbook.add_worksheet()
+
+        for col, data in enumerate(res_label_batch):
+            worksheet.write_column(row, col, data)
+
+        workbook.close()
+
 
         iteration_info_dict = evl_metrics.accumulate(predictions_val,
                                                      labels_val, loss_val)
@@ -303,6 +358,7 @@ def evaluate():
     video_id_batch = tf.get_collection("video_id_batch")[0]
     prediction_batch = tf.get_collection("predictions")[0]
     label_batch = tf.get_collection("labels")[0]
+    outputs = tf.get_collection("outputs")[0]
     loss = tf.get_collection("loss")[0]
     summary_op = tf.get_collection("summary_op")[0]
 
@@ -317,7 +373,7 @@ def evaluate():
       last_global_step_val = evaluation_loop(video_id_batch, prediction_batch,
                                              label_batch, loss, summary_op,
                                              saver, summary_writer, evl_metrics,
-                                             last_global_step_val)
+                                             last_global_step_val,outputs)
       if FLAGS.run_once:
         break
 
@@ -330,4 +386,3 @@ def main(unused_argv):
 
 if __name__ == "__main__":
   app.run()
-

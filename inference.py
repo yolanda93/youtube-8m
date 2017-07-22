@@ -35,7 +35,7 @@ FLAGS = flags.FLAGS
 if __name__ == '__main__':
   flags.DEFINE_string("train_dir", "C:/Users/Yolanda/workspace/youtube-8m/tmp/yt8m_model/",
                       "The directory to load the model files from.")
-  flags.DEFINE_string("output_file", "C:/Users/Yolanda/workspace/youtube-8m/tmp/yt8m_model/",
+  flags.DEFINE_string("output_file", "./tmp/yt8m_model/",
                       "The file to save the predictions to.")
   flags.DEFINE_string(
       "input_data_pattern", "C:/Users/Yolanda/workspace/youtube-8m/dataset/frame_level/evaluation/test*.tfrecord",

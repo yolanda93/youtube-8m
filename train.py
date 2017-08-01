@@ -38,7 +38,7 @@ FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
   # Dataset flags.
-  flags.DEFINE_string("train_dir", "/tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "./tmp/yt8m_model/",
                       "The directory to save the model files in.")
   flags.DEFINE_string(
       "train_data_pattern", "C://Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train*.tfrecord",
@@ -62,7 +62,7 @@ if __name__ == "__main__":
       "Which architecture to use for the model. Models are defined "
       "in models.py.")
   flags.DEFINE_bool(
-      "start_new_model", False,
+      "start_new_model", True,
       "If set, this will not resume from a checkpoint and will instead create a"
       " new model instance.")
 
@@ -275,10 +275,10 @@ def build_graph(reader,
             labels=tower_labels[i])
 
           result = model.create_model2(
-            result_aux["predictions"],
-            num_frames=tower_num_frames[i],
-            vocab_size=reader.num_classes,
-            labels=tower_labels[i])
+             result_aux["predictions"],
+             num_frames=tower_num_frames[i],
+             vocab_size=reader.num_classes,
+             labels=tower_labels[i])
 
           for variable in slim.get_model_variables():
             tf.summary.histogram(variable.op.name, variable)

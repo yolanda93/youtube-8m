@@ -24,7 +24,7 @@ from tensorflow import flags
 from tensorflow import gfile
 from tensorflow import logging
 from tensorflow.python.client import device_lib
-import matplotlib.pyplot as plt
+
 
 import eval_util
 import export_model
@@ -38,10 +38,10 @@ FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
   # Dataset flags.
-  flags.DEFINE_string("train_dir", "./tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "/tmp/yt8m_model/",
                       "The directory to save the model files in.")
   flags.DEFINE_string(
-      "train_data_pattern", "C:/Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train3B/train*.tfrecord",
+      "train_data_pattern", "C://Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train*.tfrecord",
       "File glob for the training dataset. If the files refer to Frame Level "
       "features (i.e. tensorflow.SequenceExample), then set --reader_type "
       "format. The (Sequence)Examples are expected to have 'rgb' byte array "
@@ -268,11 +268,18 @@ def build_graph(reader,
     with tf.device(device_string % i):
       with (tf.variable_scope(("tower"), reuse=True if i > 0 else None)):
         with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
-          result = model.create_model(
+          result_aux = model.create_model(
             tower_inputs[i],
             num_frames=tower_num_frames[i],
             vocab_size=reader.num_classes,
             labels=tower_labels[i])
+
+          result = model.create_model2(
+            result_aux["predictions"],
+            num_frames=tower_num_frames[i],
+            vocab_size=reader.num_classes,
+            labels=tower_labels[i])
+
           for variable in slim.get_model_variables():
             tf.summary.histogram(variable.op.name, variable)
 
@@ -421,24 +428,6 @@ class Trainer(object):
     logging.info("%s: Starting managed session.", task_as_string(self.task))
     with sv.managed_session(target, config=self.config) as sess:
       try:
-        if(i>0):
-            result1 = sess.run(outputs)
-            print("outputs vector")
-            print(outputs)
-            print(result1)
-            plt.plot(result1[0])
-            plt.show()
-
-            result2 = sess.run(state)
-            print("state vector")
-            print(state)
-            print(result2)
-
-            result4 = sess.run(num_frames)
-            print("num_frames")
-            print(num_frames)
-            print(result4)
-        i+=1
 
         logging.info("%s: Entering training loop.", task_as_string(self.task))
         while (not sv.should_stop()) and (not self.max_steps_reached):

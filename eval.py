@@ -37,7 +37,7 @@ import os
 FLAGS = flags.FLAGS
 
 examples_processed = 1150
-
+save_lstm_results = False
 row = 0
 
 per_frame = 300
@@ -166,11 +166,17 @@ def build_graph(reader,
     predictions = result["predictions"]
     state = result["state"]
     outputs = result["outputs"]
+
     tf.summary.histogram("model_activations", predictions)
     if "loss" in result.keys():
       label_loss = result["loss"]
     else:
       label_loss = label_loss_fn.calculate_loss(predictions, labels_batch)
+
+  result = model.create_model2(predictions,
+                               vocab_size=reader.num_classes,
+                               labels=labels_batch,
+                               is_training=False)
 
   tf.add_to_collection("global_step", global_step)
   tf.add_to_collection("loss", label_loss)
@@ -182,6 +188,7 @@ def build_graph(reader,
   tf.add_to_collection("num_frames", num_frames)
   tf.add_to_collection("labels", tf.cast(labels_batch, tf.float32))
   tf.add_to_collection("summary_op", tf.summary.merge_all())
+
 
 
 
@@ -247,60 +254,61 @@ def evaluation_loop(video_id_batch, prediction_batch, label_batch, loss,
         example_per_second = labels_val.shape[0] / seconds_per_batch
         examples_processed += labels_val.shape[0]
 
-        global res_pred
-        res_pred[row] =  sess.run(prediction_batch)
+        if save_lstm_results ==True:
+            global res_pred
+            res_pred[row] =  sess.run(prediction_batch)
 
-        global row
-        row= row  + 1
-
-        if row == per_frame-1: # max frames is 300
-            # initalize variable
             global row
-            row=0
+            row= row  + 1
 
-            res_video_id_batch =  sess.run(video_id_batch)
-            res_label_batch =  sess.run(label_batch)
-            res_outputs = sess.run(outputs)
+            if row == per_frame-1: # max frames is 300
+                # initalize variable
+                global row
+                row=0
 
-            directory = './results/' + str(res_video_id_batch[0])
-            if not os.path.exists(directory):
-                os.makedirs(directory)
+                res_video_id_batch =  sess.run(video_id_batch)
+                res_label_batch =  sess.run(label_batch)
+                res_outputs = sess.run(outputs)
 
-            # --------------------->  predictions
+                directory = './results/' + str(res_video_id_batch[0])
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
 
-            name =  "predictions"
+                # --------------------->  predictions
 
-            workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
-            worksheet = workbook.add_worksheet()
+                name =  "predictions"
 
-            for col, data in enumerate(res_pred):
-                worksheet.write_column(row, col, data)
+                workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+                worksheet = workbook.add_worksheet()
 
-            workbook.close()
+                for col, data in enumerate(res_pred):
+                    worksheet.write_column(row, col, data)
 
-            # --------------------->  outputs
+                workbook.close()
 
-            name =  "outputs"
+                # --------------------->  outputs
 
-            workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
-            worksheet = workbook.add_worksheet()
+                name =  "outputs"
 
-            for col, data in enumerate(res_outputs[0]):
-                worksheet.write_column(row, col, data)
+                workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+                worksheet = workbook.add_worksheet()
 
-            workbook.close()
+                for col, data in enumerate(res_outputs[0]):
+                    worksheet.write_column(row, col, data)
 
-            # --------------------->  labels
+                workbook.close()
 
-            name =  "labels"
+                # --------------------->  labels
 
-            workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
-            worksheet = workbook.add_worksheet()
+                name =  "labels"
 
-            for col, data in enumerate(res_label_batch):
-                worksheet.write_column(row, col, data)
+                workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+                worksheet = workbook.add_worksheet()
 
-            workbook.close()
+                for col, data in enumerate(res_label_batch):
+                    worksheet.write_column(row, col, data)
+
+                workbook.close()
 
 
         iteration_info_dict = evl_metrics.accumulate(predictions_val,

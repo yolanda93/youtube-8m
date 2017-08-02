@@ -264,3 +264,92 @@ class LstmModel(models.BaseModel):
             model_output=outputs,
             vocab_size=vocab_size,
             **unused_params)
+
+  def create_model3(self,
+                   model_input,
+                   vocab_size,
+                   num_frames,
+                   iterations=None,
+                   add_batch_norm=None,
+                   sample_random_frames=None,
+                   cluster_size=None,
+                   hidden_size=None,
+                   is_training=True,
+                   **unused_params):
+    iterations = iterations or FLAGS.iterations
+    add_batch_norm = add_batch_norm or FLAGS.dbof_add_batch_norm
+    random_frames = sample_random_frames or FLAGS.sample_random_frames
+    cluster_size = cluster_size or FLAGS.dbof_cluster_size
+    hidden1_size = hidden_size or FLAGS.dbof_hidden_size
+
+    num_frames = tf.cast(tf.expand_dims(num_frames, 1), tf.float32)
+    if random_frames:
+      model_input = utils.SampleRandomFrames(model_input, num_frames,
+                                             iterations)
+    else:
+      model_input = utils.SampleRandomSequence(model_input, num_frames,
+                                               iterations)
+    max_frames = model_input.get_shape().as_list()[1]
+    feature_size = model_input.get_shape().as_list()[2]
+    reshaped_input = tf.reshape(model_input, [-1, feature_size])
+    tf.summary.histogram("input_hist", reshaped_input)
+
+    if add_batch_norm:
+      reshaped_input = slim.batch_norm(
+          reshaped_input,
+          center=True,
+          scale=True,
+          is_training=is_training,
+          scope="input_bn")
+
+    cluster_weights = tf.get_variable("cluster_weights",
+      [feature_size, cluster_size],
+      initializer = tf.random_normal_initializer(stddev=1 / math.sqrt(feature_size)))
+    tf.summary.histogram("cluster_weights", cluster_weights)
+    activation = tf.matmul(reshaped_input, cluster_weights)
+    if add_batch_norm:
+      activation = slim.batch_norm(
+          activation,
+          center=True,
+          scale=True,
+          is_training=is_training,
+          scope="cluster_bn")
+    else:
+      cluster_biases = tf.get_variable("cluster_biases",
+        [cluster_size],
+        initializer = tf.random_normal(stddev=1 / math.sqrt(feature_size)))
+      tf.summary.histogram("cluster_biases", cluster_biases)
+      activation += cluster_biases
+    activation = tf.nn.relu6(activation)
+    tf.summary.histogram("cluster_output", activation)
+
+    activation = tf.reshape(activation, [-1, max_frames, cluster_size])
+    activation = utils.FramePooling(activation, FLAGS.dbof_pooling_method)
+
+    hidden1_weights = tf.get_variable("hidden1_weights",
+      [cluster_size, hidden1_size],
+      initializer=tf.random_normal_initializer(stddev=1 / math.sqrt(cluster_size)))
+    tf.summary.histogram("hidden1_weights", hidden1_weights)
+    activation = tf.matmul(activation, hidden1_weights)
+    if add_batch_norm:
+      activation = slim.batch_norm(
+          activation,
+          center=True,
+          scale=True,
+          is_training=is_training,
+          scope="hidden1_bn")
+    else:
+      hidden1_biases = tf.get_variable("hidden1_biases",
+        [hidden1_size],
+        initializer = tf.random_normal_initializer(stddev=0.01))
+      tf.summary.histogram("hidden1_biases", hidden1_biases)
+      activation += hidden1_biases
+    activation = tf.nn.relu6(activation)
+    tf.summary.histogram("hidden1_output", activation)
+
+    aggregated_model = getattr(video_level_models,
+                               FLAGS.video_level_classifier_model)
+    return aggregated_model().create_model(
+        model_input=activation,
+        vocab_size=vocab_size,
+        **unused_params)

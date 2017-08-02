@@ -273,7 +273,7 @@ def build_graph(reader,
             num_frames=tower_num_frames[i],
             vocab_size=reader.num_classes,
             labels=tower_labels[i])
-          result = model.create_model2(
+          result = model.create_model3(
             result_aux["predictions"],
             num_frames=tower_num_frames[i],
             vocab_size=reader.num_classes,

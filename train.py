@@ -268,17 +268,17 @@ def build_graph(reader,
     with tf.device(device_string % i):
       with (tf.variable_scope(("tower"), reuse=True if i > 0 else None)):
         with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
-          result_aux = model.create_model2(
+          result_aux = model.create_model(
             tower_inputs[i],
             num_frames=tower_num_frames[i],
             vocab_size=reader.num_classes,
             labels=tower_labels[i])
-
-          result = model.create_model(
+          result = model.create_model2(
             result_aux["predictions"],
             num_frames=tower_num_frames[i],
             vocab_size=reader.num_classes,
             labels=tower_labels[i])
+
 
           for variable in slim.get_model_variables():
             tf.summary.histogram(variable.op.name, variable)

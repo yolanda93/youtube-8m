@@ -268,12 +268,12 @@ def build_graph(reader,
     tower_inputs = tf.split(tower_inputs[i], max_frame)
     tower_num_frames = tf.split(tower_num_frames[i], max_frame)
     with tf.device(device_string % i):
-        with (tf.variable_scope(("tower"), reuse=True if i > 0 else None)):
-            with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
-                for j in range(max_frame):
-                    with tf.device(device_string % j):
-                        with (tf.variable_scope(("tower"), reuse=True if j > 0 else None)):
-                            with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
+      with (tf.variable_scope(("tower"), reuse=True if i > 0 else None)):
+          with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
+              for j in range(max_frame):
+                  with tf.device(device_string % j):
+                     with (tf.variable_scope(("tower"), reuse=True if j > 0 else None)):
+                          with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:1" if num_gpus!=1 else "/gpu:1")):
                                 # For some reason these 'with' statements can't be combined onto the same
                                 # line. They have to be nested.
                               result = model.create_model(

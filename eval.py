@@ -173,10 +173,7 @@ def build_graph(reader,
     else:
       label_loss = label_loss_fn.calculate_loss(predictions, labels_batch)
 
-  result = model.create_model2(predictions,
-                               vocab_size=reader.num_classes,
-                               labels=labels_batch,
-                               is_training=False)
+
 
   tf.add_to_collection("global_step", global_step)
   tf.add_to_collection("loss", label_loss)

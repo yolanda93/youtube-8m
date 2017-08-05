@@ -206,14 +206,13 @@ class LstmModel(models.BaseModel):
     number_of_layers = FLAGS.lstm_layers
 
     stacked_lstm = tf.contrib.rnn.MultiRNNCell(
-            [
-                tf.contrib.rnn.BasicLSTMCell(
-                    lstm_size, forget_bias=1.0)
-                for _ in range(number_of_layers)
-                ])
-
+                [
+                    tf.contrib.rnn.BasicLSTMCell(
+                        lstm_size, forget_bias=1.0)
+                    for _ in range(number_of_layers)
+                    ])
     loss = 0.0
-
+    print(num_frames)
     outputs, state = tf.nn.dynamic_rnn(stacked_lstm, model_input,
                                        sequence_length=num_frames,
                                        dtype=tf.float32)
@@ -221,10 +220,13 @@ class LstmModel(models.BaseModel):
     aggregated_model = getattr(video_level_models,
                                FLAGS.video_level_classifier_model)
 
+
     return aggregated_model().create_model(
-        model_input=state[-1].h,
-        vocab_size=vocab_size,
-        **unused_params)
+            model_input=state[-1].h,
+            model_output=outputs,
+            vocab_size=vocab_size,
+            **unused_params)
+
 
   def create_model2(self, model_input, vocab_size, **unused_params):
     """Creates a model which uses a stack of LSTMs to represent the video.

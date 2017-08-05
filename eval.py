@@ -28,7 +28,7 @@ from tensorflow import flags
 from tensorflow import gfile
 from tensorflow import logging
 import utils
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy
 numpy.set_printoptions(threshold=numpy.inf)
 from time import gmtime, strftime

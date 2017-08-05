@@ -17,7 +17,7 @@ import time
 import sys
 
 import eval_util
-import xlsxwriter
+#import xlsxwriter
 import losses
 import frame_level_models
 import video_level_models

@@ -44,7 +44,7 @@ per_frame = 300
 
 res_pred = numpy.zeros((per_frame,4716))# 300 max frames and 4017 labels
 
-os.chdir('C:\\Users\Yolanda\workspace\youtube-8m')
+#os.chdir('C:\\Users\Yolanda\workspace\youtube-8m')
 if __name__ == "__main__":
   # Dataset flags.
   flags.DEFINE_string("train_dir", "./tmp/yt8m_model/",

@@ -254,61 +254,61 @@ def evaluation_loop(video_id_batch, prediction_batch, label_batch, loss,
         example_per_second = labels_val.shape[0] / seconds_per_batch
         examples_processed += labels_val.shape[0]
 
-        if save_lstm_results ==True:
-            global res_pred
-            res_pred[row] =  sess.run(prediction_batch)
-
-            global row
-            row= row  + 1
-
-            if row == per_frame-1: # max frames is 300
-                # initalize variable
-                global row
-                row=0
-
-                res_video_id_batch =  sess.run(video_id_batch)
-                res_label_batch =  sess.run(label_batch)
-                res_outputs = sess.run(outputs)
-
-                directory = './results/' + str(res_video_id_batch[0])
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-
-                # --------------------->  predictions
-
-                name =  "predictions"
-
-                workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
-                worksheet = workbook.add_worksheet()
-
-                for col, data in enumerate(res_pred):
-                    worksheet.write_column(row, col, data)
-
-                workbook.close()
-
-                # --------------------->  outputs
-
-                name =  "outputs"
-
-                workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
-                worksheet = workbook.add_worksheet()
-
-                for col, data in enumerate(res_outputs[0]):
-                    worksheet.write_column(row, col, data)
-
-                workbook.close()
-
-                # --------------------->  labels
-
-                name =  "labels"
-
-                workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
-                worksheet = workbook.add_worksheet()
-
-                for col, data in enumerate(res_label_batch):
-                    worksheet.write_column(row, col, data)
-
-                workbook.close()
+        # if save_lstm_results ==True:
+        #     global res_pred
+        #     res_pred[row] =  sess.run(prediction_batch)
+        #
+        #     global row
+        #     row= row  + 1
+        #
+        #     if row == per_frame-1: # max frames is 300
+        #         # initalize variable
+        #         global row
+        #         row=0
+        #
+        #         res_video_id_batch =  sess.run(video_id_batch)
+        #         res_label_batch =  sess.run(label_batch)
+        #         res_outputs = sess.run(outputs)
+        #
+        #         directory = './results/' + str(res_video_id_batch[0])
+        #         if not os.path.exists(directory):
+        #             os.makedirs(directory)
+        #
+        #         # --------------------->  predictions
+        #
+        #         name =  "predictions"
+        #
+        #         workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+        #         worksheet = workbook.add_worksheet()
+        #
+        #         for col, data in enumerate(res_pred):
+        #             worksheet.write_column(row, col, data)
+        #
+        #         workbook.close()
+        #
+        #         # --------------------->  outputs
+        #
+        #         name =  "outputs"
+        #
+        #         workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+        #         worksheet = workbook.add_worksheet()
+        #
+        #         for col, data in enumerate(res_outputs[0]):
+        #             worksheet.write_column(row, col, data)
+        #
+        #         workbook.close()
+        #
+        #         # --------------------->  labels
+        #
+        #         name =  "labels"
+        #
+        #         workbook = xlsxwriter.Workbook(directory  + "/" + name + '.xlsx')
+        #         worksheet = workbook.add_worksheet()
+        #
+        #         for col, data in enumerate(res_label_batch):
+        #             worksheet.write_column(row, col, data)
+        #
+        #         workbook.close()
 
 
         iteration_info_dict = evl_metrics.accumulate(predictions_val,

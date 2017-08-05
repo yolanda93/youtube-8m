@@ -206,11 +206,12 @@ class LstmModel(models.BaseModel):
     number_of_layers = FLAGS.lstm_layers
 
     stacked_lstm = tf.contrib.rnn.MultiRNNCell(
-                [
-                    tf.contrib.rnn.BasicLSTMCell(
-                        lstm_size, forget_bias=1.0)
-                    for _ in range(number_of_layers)
-                    ])
+            [
+                tf.contrib.rnn.BasicLSTMCell(
+                    lstm_size, forget_bias=1.0, state_is_tuple=False)
+                for _ in range(number_of_layers)
+                ], state_is_tuple=False)
+
     loss = 0.0
     print(num_frames)
     outputs, state = tf.nn.dynamic_rnn(stacked_lstm, model_input,
@@ -222,7 +223,7 @@ class LstmModel(models.BaseModel):
 
 
     return aggregated_model().create_model(
-            model_input=state[-1].h,
+            model_input=state,
             model_output=outputs,
             vocab_size=vocab_size,
             **unused_params)

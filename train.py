@@ -273,7 +273,7 @@ def build_graph(reader,
           with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
               for j in range(max_frame):
                   with tf.device(device_string % j):
-                     with (tf.variable_scope(("tower"), reuse=True if j > 0 else None)):
+                     with (tf.variable_scope(("tower_frame"), reuse=True if j > 0 else None)):
                           with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:1" if num_gpus!=1 else "/gpu:1")):
                                 # For some reason these 'with' statements can't be combined onto the same
                                 # line. They have to be nested.

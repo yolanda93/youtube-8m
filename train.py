@@ -265,7 +265,7 @@ def build_graph(reader,
   for i in range(num_towers):
     labels=tower_labels[i]
     # Using the context manager.
-    max_frame=100
+    max_frame=50
     tower_inputs_per_frame = tf.split(tower_inputs[i], num_or_size_splits=max_frame, axis=1)
     all_frames_predictions = []
     with tf.device(device_string % i):
@@ -281,7 +281,7 @@ def build_graph(reader,
                                                 num_frames=[1],
                                                 vocab_size=reader.num_classes,
                                                 labels=labels)
-                            
+
                           all_frames_predictions.append(result_per_frame["predictions"]) # all frame predictions in the video
 
               predictions_stack = tf.stack(all_frames_predictions, axis=1)

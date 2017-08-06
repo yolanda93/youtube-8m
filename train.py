@@ -281,9 +281,8 @@ def build_graph(reader,
                                                 num_frames=[1],
                                                 vocab_size=reader.num_classes,
                                                 labels=labels)
-
-                          predictions_per_frame = result_per_frame["predictions"]
-                          all_frames_predictions.append(predictions_per_frame) # all frame predictions in the video
+                            
+                          all_frames_predictions.append(result_per_frame["predictions"]) # all frame predictions in the video
 
               predictions_stack = tf.stack(all_frames_predictions, axis=1)
 

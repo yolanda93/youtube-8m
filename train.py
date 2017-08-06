@@ -262,6 +262,7 @@ def build_graph(reader,
   tower_predictions = []
   tower_label_losses = []
   tower_reg_losses = []
+  print("building a graph again")
   for i in range(num_towers):
     labels=tower_labels[i]
     # Using the context manager.

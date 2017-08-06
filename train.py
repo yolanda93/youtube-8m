@@ -266,7 +266,7 @@ def build_graph(reader,
   for i in range(num_towers):
     labels=tower_labels[i]
     # Using the context manager.
-    max_frame=300
+    max_frame=299
     tower_inputs_per_frame = tf.split(tower_inputs[i], num_or_size_splits=max_frame, axis=1)
     all_frames_predictions = []
     with tf.device(device_string % i):

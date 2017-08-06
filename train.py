@@ -416,13 +416,6 @@ class Trainer(object):
         global_step = tf.get_collection("global_step")[0]
         loss = tf.get_collection("loss")[0]
         predictions = tf.get_collection("predictions")[0]
-        i=0
-        if(i>0):
-          state = tf.get_collection("state")[0]
-          outputs = tf.get_collection("outputs")[0]
-
-
-        num_frames = tf.get_collection("num_frames")[0]
         labels = tf.get_collection("labels")[0]
         train_op = tf.get_collection("train_op")[0]
         init_op = tf.global_variables_initializer()

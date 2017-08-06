@@ -38,7 +38,7 @@ FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
   # Dataset flags.
-  flags.DEFINE_string("train_dir", "./tmp/yt8m_model/",
+  flags.DEFINE_string("train_dir", "C://Users/Yolanda/workspace/master-thesis/youtube-8m-challenge/models/best-model-copy/model.ckpt-58010",
                       "The directory to save the model files in.")
   flags.DEFINE_string(
       "train_data_pattern", "C://Users/Yolanda/workspace/youtube-8m/dataset/frame_level/train/train*.tfrecord",
@@ -62,7 +62,7 @@ if __name__ == "__main__":
       "Which architecture to use for the model. Models are defined "
       "in models.py.")
   flags.DEFINE_bool(
-      "start_new_model", True,
+      "start_new_model", False,
       "If set, this will not resume from a checkpoint and will instead create a"
       " new model instance.")
 
@@ -266,7 +266,7 @@ def build_graph(reader,
   for i in range(num_towers):
     labels=tower_labels[i]
     # Using the context manager.
-    max_frame=299
+    max_frame=2
     tower_inputs_per_frame = tf.split(tower_inputs[i], num_or_size_splits=max_frame, axis=1)
     all_frames_predictions = []
     with tf.device(device_string % i):
@@ -279,7 +279,7 @@ def build_graph(reader,
 
                           result_per_frame = model.create_model(
                                                 tower_inputs_per_frame[j],
-                                                num_frames=[1,1],
+                                                num_frames=[1],
                                                 vocab_size=reader.num_classes,
                                                 labels=labels)
 
@@ -478,7 +478,7 @@ class Trainer(object):
                  >= self.export_model_steps))
 
             if self.is_master and time_to_export:
-              self.export_model(global_step_val, sv.saver, sv.save_path, sess)
+              #self.export_model(global_step_val, sv.saver, sv.save_path, sess)
               self.last_model_export_step = global_step_val
           else:
             logging.info("training step " + str(global_step_val) + " | Loss: " +

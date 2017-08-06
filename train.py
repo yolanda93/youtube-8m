@@ -272,20 +272,18 @@ def build_graph(reader,
       with (tf.variable_scope(("tower"), reuse=True if i > 0 else None)):
           with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:0" if num_gpus!=1 else "/gpu:0")):
               for j in range(max_frame):
-                  with tf.device(device_string % j):
                      with (tf.variable_scope(("tower_frame"), reuse=True if j > 0 else None)):
-                          with (slim.arg_scope([slim.model_variable, slim.variable], device="/cpu:1" if num_gpus!=1 else "/gpu:1")):
-                                # For some reason these 'with' statements can't be combined onto the same
-                                # line. They have to be nested.
+                            # For some reason these 'with' statements can't be combined onto the same
+                            # line. They have to be nested.
 
-                              result_per_frame = model.create_model(
-                                                    tower_inputs_per_frame[j],
-                                                    num_frames=[1,1],
-                                                    vocab_size=reader.num_classes,
-                                                    labels=labels)
+                          result_per_frame = model.create_model(
+                                                tower_inputs_per_frame[j],
+                                                num_frames=[1,1],
+                                                vocab_size=reader.num_classes,
+                                                labels=labels)
 
-                              predictions_per_frame = result_per_frame["predictions"]
-                              all_frames_predictions.append(predictions_per_frame) # all frame predictions in the video
+                          predictions_per_frame = result_per_frame["predictions"]
+                          all_frames_predictions.append(predictions_per_frame) # all frame predictions in the video
 
               predictions_stack = tf.stack(all_frames_predictions, axis=1)
 

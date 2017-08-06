@@ -279,7 +279,7 @@ def build_graph(reader,
 
                           result_per_frame = model.create_model(
                                                 tower_inputs_per_frame[j],
-                                                num_frames=[1],
+                                                num_frames=[1,1],
                                                 vocab_size=reader.num_classes,
                                                 labels=labels)
 
